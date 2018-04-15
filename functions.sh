@@ -14,8 +14,8 @@ Filter_Active_Interfaces () {
   echo ${Active_Interfaces[*]}
 }
 
-createmenu (){
-  arrsize=$1
+Menu_Active_Interfaces (){
+  arrsize=$(expr 1 + $1 )
   echo "Size of array: $arrsize"
   echo "${@:2}"
   select option in "${@:2}"; do
@@ -36,14 +36,17 @@ createmenu (){
 Interface_IP () {
     declare IP=$(ip addr show $option | awk '{if(NR==3) print $2}' )
     echo $IP
+    Netmask=$(echo $IP | cut -d "/" -f "2")
 }
 
 Clone_Profile () {
   Active_Profile=$( nmcli -t con show --active |  awk '{if(NR==1) print $0}'|cut -d ":" -f 1 )
-  echo $Active_Profile
+  echo -e $Active_Profile "is the active profile,\nand will be cloned to" $Active_Profile"static"
 }
 
+IP_Addr_Prompt () {}
+
 Filter_Active_Interfaces
-createmenu "${#Active_Interfaces[@]}" "${Active_Interfaces[@]}"
+Menu_Active_Interfaces "${#Active_Interfaces[@]}" "${Active_Interfaces[@]}"
 Interface_IP
 Clone_Profile
