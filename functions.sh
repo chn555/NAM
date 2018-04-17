@@ -14,7 +14,8 @@ Filter_Active_Interfaces () {
   echo Looking for active interfaces...
   echo ""
   sleep 1
-  readarray -t Active_Interfaces <<< "$(nmcli -t con show --active )"
+  readarray -t Active_Interfaces <<< "$(nmcli -t -f NAME,UUID,TYPE,DEVICE con show --active
+ )"
   for i in ${Active_Interfaces[@]}; do
       # Filter out the real connections
       i=$(echo $i | egrep 'wireless|ethernet')
@@ -101,7 +102,7 @@ User_Prompt () {
 }
 
 Clone_Profile () {
-  Active_Profile=$( nmcli -t con show --active |  awk '{if(NR==1) print $0}'|cut -d ":" -f 1 )
+  Active_Profile=$( nmcli --t -f NAME,UUID,TYPE,DEVICE con show --active |  awk '{if(NR==1) print $0}'|cut -d ":" -f 1 )
   echo -e $Active_Profile "is the active profile,\nand will be cloned to" $Active_Profile"static"
 }
 
