@@ -164,6 +164,9 @@ Verify_Info () {
 Verify_Info_loop () {
   read -p "Is the information correct? [Y,n]" currect
   if [[ $currect == "" ]] || [[ $currect == "y" ]] || [[ $currect == "Y" ]]; then
+    echo "Thanks for reaching the end of this script."
+    echo  "as of right now it does not do anything."
+    echo "If some information was incorrectly displayed, or you found a mistake, please open a new issue on https://github.com/chn555/NAM"
     :
   elif [[ $currect == "n" ]] || [[ $currect == "N" ]]; then
     echo " "
