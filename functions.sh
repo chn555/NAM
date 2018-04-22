@@ -216,14 +216,16 @@ Clone_Profile () {
   echo "Cloning profile..."
   nmcli con clone "$Active_Profile" "$New_Profile"
   nmcli con mod "$New_Profile" ipv4.method manual ipv4.addr "$New_Ip" ipv4.gateway "$New_Gateway" ipv4.dns "$New_DNS1 $New_DNS2"
-  nmcli con down $Active_Profile && nmcli con up $New_Profile
-  echo "Profile $New_Profile activated"
  }
 
-
+Activate_New_Profile () {
+  nmcli con down $Active_Profile && nmcli con up $New_Profile
+  echo "Profile $New_Profile activated"
+}
 
 Filter_Active_Interfaces
 Menu_Active_Interfaces "${#Filtered_Active_Interfaces[@]}" "${Filtered_Active_Interfaces[@]}"
 Interface_Info
 User_Prompt
 Clone_Profile
+Activate_New_Profile
