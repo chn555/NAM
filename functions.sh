@@ -179,15 +179,50 @@ Verify_Info_loop () {
   fi
 }
 
-#Clone_Profile () {
-#  Active_Profile=$( nmcli --t -f NAME,UUID,TYPE,DEVICE con show --active |  awk '{if(NR==1) print $0}'|cut -d ":" -f 1 )
-#  echo -e $Active_Profile "is the active profile,\nand will be cloned to" $Active_Profile"static"
-# }
+Clone_Profile_loop () {
+  read -p "$1 already exists, override? [N,y]" Override
+  if  [[ $Override == "y" ]] || [[ $Override == "Y" ]]; then
+    nmcli con delete "$1"
+  elif [[ $Override == "" ]] || [[ $Override == "n" ]] || [[ $Override == "N" ]]; then
+    echo " "
+    echo $line
+    echo $line
+    Profile_User_Prompt
+  else
+    echo "Invalid input, try again"
+    Clone_Profile_loop
+  fi
+}
 
-#IP_Addr_Prompt () {}
+Profile_User_Prompt () {
+  read -p "Enter the name of the new profile : " Temp_Profile
+  nmcli con show "$Temp_Profile"  &> /dev/null
+  if [[ $? == 0 ]];then
+    Clone_Profile_loop "$Temp_Profile"
+  else
+    New_Profile=$Temp_Profile
+  fi
+}
+Clone_Profile () {
+  Active_Profile=$( nmcli --t -f NAME,UUID,TYPE,DEVICE con show --active |  grep $option |cut -d ":" -f 1 )
+  New_Profile=$(echo $Active_Profile"_static")
+  nmcli con show "$New_Profile" &> /dev/null
+  if [[ $? == 0 ]];then
+    Clone_Profile_loop "$New_Profile"
+  else
+    echo -e $Active_Profile "is the active profile,\nand will be cloned to" $Active_Profile"_static"
+  fi
+  sleep 1s
+  echo "Cloning profile..."
+  nmcli con clone "$Active_Profile" "$New_Profile"
+  #nmcli con mod "$New_Profile" ipv4.method manual ipv4.addr "$New_Ip" ipv4.gateway "$New_Gateway" ipv4.dns "$New_DNS1 $New_DNS2"
+
+ }
+
+
 
 Filter_Active_Interfaces
 Menu_Active_Interfaces "${#Filtered_Active_Interfaces[@]}" "${Filtered_Active_Interfaces[@]}"
 Interface_Info
 User_Prompt
-#Clone_Profile
+Clone_Profile
