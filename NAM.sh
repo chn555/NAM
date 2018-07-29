@@ -44,12 +44,8 @@ Log_And_Variables () {
 ## Check if kde is installed, if it is, notify the user that wireless profiles
 ## might not work
 KDE_Check () {
-<<<<<<< HEAD
   if [[ $( echo $DESKTOP_SESSION | grep plasma ) ]] ; then
 		echo $line
-=======
-  if [[ $( echo $DESKTOP_SESSION | grep plasma ) ]]; then
->>>>>>> 5233c241e73bb6989f1621e8fd37cce8e48be868
     echo "NAM has detected you are using KDE,"
     echo "due to the way KDE stores wireless passwords"
     echo "the wireless profiles NAM will require you to enter the password."
