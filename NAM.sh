@@ -40,9 +40,9 @@ Log_And_Variables () {
 ## might not work
 KDE_Check () {
   if [[ $( echo $DESKTOP_SESSION | grep plasma ) ]] ; then
-    echo "NAM has detected you are using KDE,
-    due to the way KDE stores wireless passwords
-    the wireless profiles NAM creates might not work."
+    echo "NAM has detected you are using KDE,"
+    echo "due to the way KDE stores wireless passwords"
+    echo "the wireless profiles NAM creates might not work."
   fi
 }
 
