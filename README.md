@@ -1,6 +1,6 @@
 # NAM
 
-The Network Automated Manager is a short script designed to easily set a static ip
+The Network Automated Manager is a short script designed to easily set a static ip.  
 It detects active network connections and changes them to static connections
 
 ## Getting Started
