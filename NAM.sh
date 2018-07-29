@@ -77,7 +77,7 @@ Active_Interfaces_Menu (){
     if [[ ${#Filtered_Active_Interfaces[@]} -eq 0 ]]; then
         echo No interface is found, exiting.
             sleep 1
-            ]exit 0
+            exit 0
     elif [[ ${#Filtered_Active_Interfaces[@]} -eq 1 ]]; then
         echo Only ${Filtered_Active_Interfaces[0]} is connected, and will be used
         option=${Filtered_Active_Interfaces[0]}
