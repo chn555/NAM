@@ -74,31 +74,29 @@ Filter_Active_Interfaces () {
 ## If more than one exists prompt the user, if only one exists chose that one
 ## and notify the user, if no interfaces exist exit the program
 Menu_Active_Interfaces (){
-  if [[ ${#Filtered_Active_Interfaces[@]} -eq 0 ]]; then
-     echo No interface is found, exiting.
-     sleep 1
-     exit 0
-  elif [[ ${#Filtered_Active_Interfaces[@]} -eq 1 ]]; then
-      echo Only ${Filtered_Active_Interfaces[0]} is connected, and will be used
-      option=${Filtered_Active_Interfaces[0]}
-      sleep 1
-  else
-  echo "Please select the interface you wish to use"
-    arrsize=$(expr 1 + $1 )
-    select option in "${@:2}"; do
-      if [ "$REPLY" -eq "$arrsize" ];
-      then
-        echo "Exiting..."
-        break;
-      elif [ 1 -le "$REPLY" ] && [ "$REPLY" -le $((arrsize-1)) ];
-      then
-        echo "You selected $option which is option $REPLY"
+    if [[ ${#Filtered_Active_Interfaces[@]} -eq 0 ]]; then
+        echo No interface is found, exiting.
+            sleep 1
+            ]exit 0
+    elif [[ ${#Filtered_Active_Interfaces[@]} -eq 1 ]]; then
+        echo Only ${Filtered_Active_Interfaces[0]} is connected, and will be used
+        option=${Filtered_Active_Interfaces[0]}
         sleep 1
-        echo ""
-        break;
-      else
-        echo "Incorrect Input: Select a number 1-$arrsize"
-      fi
-    done
-  fi
+    else
+        echo "Please select the interface you wish to use"
+        arrsize=$(expr 1 + $1 )
+        select option in "${@:2}"; do
+            if [ "$REPLY" -eq "$arrsize" ]; then
+                echo "Exiting..."
+                break;
+            elif [ 1 -le "$REPLY" ] && [ "$REPLY" -le $((arrsize-1)) ]; then
+                echo "You selected $option which is option $REPLY"
+                sleep 1
+                echo ""
+                break;
+            else
+                echo "Incorrect Input: Select a number 1-$arrsize"
+            fi
+        done
+    fi
 }
