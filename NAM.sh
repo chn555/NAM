@@ -30,9 +30,24 @@ Log_And_Variables () {
 
 	####  Varibale	####
     line="\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-"
+	if [[ -z $SUDO_USER ]]; then
+		orig_user=$(whoami)
+	else
+		orig_user=$SUDO_USER
+	fi
 	user_path=/home/$orig_user
-	logpath=$user_path/Automated-Installer-Log/error.log
+	errorpath=$user_path/Automated-Installer-Log/error.log
+	outputpath=$user_path/Automated-Installer-Log/output.log
 	####  Varibale	####
+
+	## Validate that the original user that logged in isn't root
+	if [[ $orig_user == "root" ]]; then
+		printf "$line\n"
+		printf "The script can't run when the user that originally logged in is root\n"
+		printf "Please log in as non-root and try again..\n"
+		printf "$line\n\n"
+		exit 1
+	fi
 
 	## Check if log folder exits, if not, create it
 	if ! [[ -d $user_path/Automated-Installer-Log ]]; then
@@ -65,6 +80,7 @@ KDE_Check () {
 Filter_Active_Interfaces () {
   echo Looking for active interfaces...
   echo ""
+  unset Active_Interfaces
   sleep 1
   readarray -t Active_Interfaces <<< "$(nmcli -t -f NAME,UUID,TYPE,DEVICE con show --active
  )"
