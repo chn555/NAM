@@ -46,9 +46,13 @@ Log_And_Variables () {
 ## might not work
 KDE_Check () {
   if [[ $( echo $DESKTOP_SESSION | grep plasma ) ]] ; then
+		echo $line
     echo "NAM has detected you are using KDE,"
     echo "due to the way KDE stores wireless passwords"
-    echo "the wireless profiles NAM creates might not work."
+    echo "the wireless profiles NAM will require you to enter the password."
+		echo $line
+		echo ""
+		sleep 3s
   fi
 }
 
@@ -195,6 +199,7 @@ User_Prompt () {
 ## asks the user to verify the information
 Verify_Info () {
   echo $line
+	echo ""
   echo $line
   echo "IP address : $New_Ip/$New_Netmask"
   echo " "
@@ -227,7 +232,10 @@ Verify_Info () {
 ## if the name is used already it will run the Overwrite_Profile_Loop,
 ## otherwise it will continue will the entered name.
 Profile_Prompt () {
-  read -p "Enter the name of the new profile : " Temp_Profile
+	echo $line
+	while [[ $Temp_Profile == "" ]]; do
+  	read -p "Enter the name of the new profile : " Temp_Profile
+	done
   nmcli con show "$Temp_Profile"  &> /dev/null
   if [[ $? == 0 ]];then
     Overwrite_Profile_Prompt "$Temp_Profile"
@@ -269,12 +277,13 @@ Clone_Profile () {
 ## This function deactivates the active profile and activates the new profile,
 ## then informs the user
 Activate_New_Profile () {
-   nmcli con down "$Active_Profile" && nmcli con up "$New_Profile"
+   nmcli con down "$Active_Profile" && nmcli con up "$New_Profile" -a
    echo "Profile $New_Profile activated"
  }
 
-
+## This script runs all the functions
 Main () {
+	echo $line
 	Root_Check
 	Log_And_Variables
 	KDE_Check
