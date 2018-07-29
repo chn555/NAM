@@ -73,7 +73,7 @@ Filter_Active_Interfaces () {
 
 ## If more than one exists prompt the user, if only one exists chose that one
 ## and notify the user, if no interfaces exist exit the program
-Menu_Active_Interfaces (){
+Active_Interfaces_Menu (){
     if [[ ${#Filtered_Active_Interfaces[@]} -eq 0 ]]; then
         echo No interface is found, exiting.
             sleep 1
@@ -189,3 +189,86 @@ User_Prompt () {
   fi
   Verify_Info
 }
+
+
+## This function displays the user input to the user,
+## asks the user to verify the information
+Verify_Info () {
+  echo $line
+  echo $line
+  echo "IP address : $New_Ip/$New_Netmask"
+  echo " "
+  echo "Gateway : $New_Gateway"
+  echo " "
+  echo "Primary DNS : $New_DNS1"
+  echo " "
+  echo "Secondary DNS : $New_DNS2"
+  echo " "
+  echo " "
+  read -p "Is the information correct? [Y,n]" currect
+	until [[ $currect == "" ]] || [[ $currect == "y" ]] ||\
+	 [[ $currect == "Y" ]] || [[ $currect == "n" ]] || \
+	 [[ $currect == "N" ]]; do
+		echo "Invalid input, try again"
+		read -p "Is the information correct? [Y,n]" currect
+	done
+  if [[ $currect == "" ]] || [[ $currect == "y" ]] || [[ $currect == "Y" ]]; then
+    :
+  elif [[ $currect == "n" ]] || [[ $currect == "N" ]]; then
+    echo " "
+    echo $line
+    echo $line
+    User_Prompt
+  fi
+}
+
+
+## This function asks the user for the new profile name,
+## if the name is used already it will run the Overwrite_Profile_Loop,
+## otherwise it will continue will the entered name.
+Profile_Prompt () {
+  read -p "Enter the name of the new profile : " Temp_Profile
+  nmcli con show "$Temp_Profile"  &> /dev/null
+  if [[ $? == 0 ]];then
+    Clone_Profile_loop "$Temp_Profile"
+  else
+    New_Profile=$Temp_Profile
+  fi
+}
+
+
+## This function will only be used if the user has entered a profile name that is in use.
+## The function will notify him the name is in use and ask him to overwrite the existing profile.
+Overwrite_Profile_Prompt () {
+  read -p "$1 already exists, override? [N,y]" Override
+  if  [[ $Override == "y" ]] || [[ $Override == "Y" ]]; then
+    nmcli con delete "$1"
+  elif [[ $Override == "" ]] || [[ $Override == "n" ]] || [[ $Override == "N" ]]; then
+    echo " "
+    echo $line
+    echo $line
+    Profil_Prompt
+  else
+    echo "Invalid input, try again"
+    Overwrite_Profile_Prompt
+  fi
+}
+
+
+## This function obtains the name of the active profile,
+## clones it to the new name and modifies it to the use the user input.
+Clone_Profile () {
+  Active_Profile=$( nmcli --t -f NAME,UUID,TYPE,DEVICE con show --active |  grep $option |cut -d ":" -f 1 )
+  sleep 1s
+  echo "Cloning profile..."
+  nmcli con clone "$Active_Profile" "$New_Profile"
+  nmcli con mod "$New_Profile" ipv4.method manual ipv4.addr "$New_Ip/$New_Netmask" ipv4.gateway "$New_Gateway" ipv4.dns "$New_DNS1 $New_DNS2"
+ }
+
+
+## This function deactivates the active profile and activates the new profile,
+## then informs the user
+Activate_New_Profile () {
+   nmcli con down "$Active_Profile" && nmcli con up "$New_Profile"
+   echo "Profile $New_Profile activated"
+ }
