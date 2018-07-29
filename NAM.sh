@@ -102,3 +102,92 @@ Menu_Active_Interfaces (){
     done
   fi
 }
+
+## Gather information about the interface, ip address,
+## netmask(bit length format), gateway and name servers
+Interface_Info () {
+    echo "Gathering information..."
+    echo ""
+    sleep 1
+    # Extract ip, netmask and gateway
+    declare Ip_Info=$(ip addr show $option | awk '{if(NR==3) print $2}')
+    Ip=$(ip addr show $option | awk '{if(NR==3) print $2}' |cut -d "/" -f "1")
+    Netmask=$(echo $Ip_Info | cut -d "/" -f "2")
+    Gateway=$(ip route show  | awk 'NR==1 {print $3}')
+}
+
+
+## Prompt the user to enter the information. ip address, netmask,
+## gateway and name servers.
+User_Prompt () {
+  # The next 2 lines are used later to validate ipv4 addresses
+  oct='([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])'
+  ip4="^$oct\\.$oct\\.$oct\\.$oct$"
+  # these set the default DNS, using google. yes Alex i love being spied on.
+  DNS1="8.8.8.8"
+  DNS2="8.8.4.4"
+  echo "Please enter the information to be set."
+  echo "If a field is left blank, the current setting will be used"
+  sleep 1
+  echo " "
+  read -p "Enter desired IP address [$Ip] : " New_Ip
+  if [[ $New_Ip == "" ]]; then
+    New_Ip=$Ip
+  else
+    until [[  $New_Ip == "" ]] || [[  "$New_Ip" =~ $ip4 ]]; do
+      read -p "Not a valid IP address. Re-enter [$Ip]  : " New_Ip
+    done
+    if [[ $New_Ip == "" ]]; then
+      New_Ip=$Ip
+    fi
+  fi
+  echo $line
+  read -p "Enter desired Netmask [$Netmask] : " New_Netmask
+  if [[ $New_Netmask == "" ]]; then
+    New_Netmask=$Netmask
+  else
+    while [[ ! $New_Netmask == "" ]] && [[ ! "$New_Netmask" -gt 1  ||  ! $New_Netmask -lt 32 ]]  ; do
+      read -p "Not a valid netmask, please re-enter your netmask in bit-length format [$Netmask] : " New_Netmask
+    done
+    if [[ $New_Netmask == "" ]]; then
+      New_Netmask=$Netmask
+    fi
+  fi
+  echo $line
+  read -p "Enter desired Gateway [$Gateway] : " New_Gateway
+  if [[ $New_Gateway == "" ]]; then
+    New_Gateway=$Gateway
+  else
+    while [[ ! $New_Gateway == "" ]] && [[ ! "$New_Gateway" =~ $ip4 ]]; do
+      read -p "Not a valid Gateway. Re-enter [$Gateway] :  " New_Gateway
+    done
+    if [[ $New_Gateway == "" ]]; then
+      New_Gateway=$Gateway
+    fi
+  fi
+  echo $line
+  read -p "Enter desired primary DNS [$DNS1] : " New_DNS1
+  if [[ $New_DNS1 == "" ]]; then
+    New_DNS1=$DNS1
+  else
+    while [[ ! $New_DNS1 == "" ]] && [[ ! "$New_DNS1" =~ $ip4 ]]; do
+      read -p "Not a valid DNS. Re-enter [$DNS1] :  " New_DNS1
+    done
+    if [[ $New_DNS1 == "" ]]; then
+      New_DNS1=$DNS1
+    fi
+  fi
+  echo $line
+  read -p "Enter desired secondary DNS [$DNS2] : " New_DNS2
+  if [[ $New_DNS2 == "" ]]; then
+    New_DNS2=$DNS2
+  else
+    while [[ ! $New_DNS2 == "" ]] && [[ ! "$New_DNS2" =~ $ip4 ]]; do
+      read -p "Not a valid DNS. Re-enter [$DNS2] :  " New_DNS1
+    done
+    if [[ $New_DNS2 == "" ]]; then
+      New_DNS1=$DNS2
+    fi
+  fi
+  Verify_Info
+}
