@@ -29,9 +29,8 @@ Root_Check () {
 Log_And_Variables () {
 
 	####  Varibale	####
-  #  line="\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-"
 	line=$(printf '%40s\n' | tr ' ' -)
-  logpath=/tmp/NAM.log
+  	logpath=/tmp/NAM.log
 	####  Varibale	####
 
 
@@ -45,7 +44,7 @@ Log_And_Variables () {
 ## Check if kde is installed, if it is, notify the user that wireless profiles
 ## might not work
 KDE_Check () {
-  if [[ $( echo $DESKTOP_SESSION | grep plasma ) ]] ; then
+  if [[ $( echo $DESKTOP_SESSION | grep plasma ) ]]; then
     echo "NAM has detected you are using KDE,"
     echo "due to the way KDE stores wireless passwords"
     echo "the wireless profiles NAM creates might not work."
@@ -60,8 +59,7 @@ Filter_Active_Interfaces () {
   ## Unset Active_Interfaces array in case the array already exist
   unset Active_Interfaces
   sleep 1
-  readarray -t Active_Interfaces <<< "$(nmcli -t -f NAME,UUID,TYPE,DEVICE con show --active
- )"
+  readarray -t Active_Interfaces <<< "$(nmcli -t -f NAME,UUID,TYPE,DEVICE con show --active)"
   for i in ${Active_Interfaces[@]}; do
       ## Filter out the real connections
       i=$(echo $i | egrep 'wireless|ethernet')
@@ -69,7 +67,7 @@ Filter_Active_Interfaces () {
       i=$(echo $i | cut -d ":" -f 4)
       ## Add the names into the new array
       Filtered_Active_Interfaces+=($i)
-    done
+  done
 }
 
 ## If more than one exists prompt the user, if only one exists chose that one
@@ -85,7 +83,7 @@ Active_Interfaces_Menu (){
         sleep 1
     else
         echo "Please select the interface you wish to use"
-        arrsize=$(expr 1 + $1 )
+        arrsize=$(expr 1 + $1)
         select option in "${@:2}"; do
             if [ "$REPLY" -eq "$arrsize" ]; then
                 echo "Exiting..."
