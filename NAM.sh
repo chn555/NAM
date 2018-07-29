@@ -17,9 +17,9 @@
 ## Checks if the script runs as root
 Root_Check () {
 
-	if ! [[ $EUID -eq 0 ]]; then
+	if  [[ $EUID -eq 0 ]]; then
 		printf "$line\n"
-		printf "This option must run with root privileges\n"
+		printf "This option must not run with root privileges\n"
 		printf "$line\n"
 		exit 1
 	fi
@@ -65,7 +65,8 @@ Log_And_Variables () {
 	fi
 }
 
-## Check if kde is installed, if it is, notify the user that wireless profiles might not work
+## Check if kde is installed, if it is, notify the user that wireless profiles
+## might not work
 KDE_Check () {
   if [[ $( echo $DESKTOP_SESSION | grep plasma ) ]] ; then
     echo "NAM has detected you are using KDE,
@@ -92,11 +93,9 @@ Filter_Active_Interfaces () {
     done
 }
 
-
+## If more than one exists prompt the user, if only one exists chose that one
+## and notify the user, if no interfaces exist exit the program
 Menu_Active_Interfaces (){
-  # IF there are no active interfaces, exit
-  # IF only one active interface, select it
-  # ELSE prompt user for the right interface
   if [[ ${#Filtered_Active_Interfaces[@]} -eq 0 ]]; then
      echo No interface is found, exiting.
      sleep 1
