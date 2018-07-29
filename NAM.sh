@@ -36,7 +36,6 @@ Log_And_Variables () {
 		orig_user=$SUDO_USER
 	fi
 	user_path=/home/$orig_user
-<<<<<<< HEAD
 	errorpath=$user_path/Automated-Installer-Log/error.log
 	outputpath=$user_path/Automated-Installer-Log/output.log
 	####  Varibale	####
@@ -64,20 +63,15 @@ Log_And_Variables () {
 	if ! [[ -e $outputpath ]]; then
 		sudo runuser -l $orig_user -c "touch $outputpath"
 	fi
-=======
-	logpath=/tmp/NAM.log
-	####  Varibale	####
-	touch $logpath
->>>>>>> d23057640c1b2f4433901315fce18cb518dec48d
 }
 
 ## Check if kde is installed, if it is, notify the user that wireless profiles
 ## might not work
 KDE_Check () {
   if [[ $( echo $DESKTOP_SESSION | grep plasma ) ]] ; then
-    echo "NAM has detected you are using KDE,"
-    echo "due to the way KDE stores wireless passwords"
-    echo "the wireless profiles NAM creates might not work."
+    echo "NAM has detected you are using KDE,
+    due to the way KDE stores wireless passwords
+    the wireless profiles NAM creates might not work."
   fi
 }
 
