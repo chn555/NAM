@@ -30,38 +30,14 @@ Log_And_Variables () {
 
 	####  Varibale	####
     line="\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-"
-	if [[ -z $SUDO_USER ]]; then
-		orig_user=$(whoami)
-	else
-		orig_user=$SUDO_USER
-	fi
-	user_path=/home/$orig_user
-	errorpath=$user_path/Automated-Installer-Log/error.log
-	outputpath=$user_path/Automated-Installer-Log/output.log
+    logpath=/tmp/NAM.log
 	####  Varibale	####
 
-	## Validate that the original user that logged in isn't root
-	if [[ $orig_user == "root" ]]; then
-		printf "$line\n"
-		printf "The script can't run when the user that originally logged in is root\n"
-		printf "Please log in as non-root and try again..\n"
-		printf "$line\n\n"
-		exit 1
-	fi
 
-	## Check if log folder exits, if not, create it
-	if ! [[ -d $user_path/Automated-Installer-Log ]]; then
-		sudo runuser -l $orig_user -c "mkdir $user_path/Automated-Installer-Log"
-	fi
 
-	## Check if error log exits, if not, create it
-	if ! [[ -e $errorpath ]]; then
-		sudo runuser -l $orig_user -c "touch $errorpath"
-	fi
-
-	## Check if output log exits, if not, create it
-	if ! [[ -e $outputpath ]]; then
-		sudo runuser -l $orig_user -c "touch $outputpath"
+	## Check if log file exits, if not, create it
+	if ! [[ -e $logpath ]]; then
+		touch $logpath
 	fi
 }
 
@@ -69,27 +45,28 @@ Log_And_Variables () {
 ## might not work
 KDE_Check () {
   if [[ $( echo $DESKTOP_SESSION | grep plasma ) ]] ; then
-    echo "NAM has detected you are using KDE,
-    due to the way KDE stores wireless passwords
-    the wireless profiles NAM creates might not work."
+    echo "NAM has detected you are using KDE,"
+    echo "due to the way KDE stores wireless passwords"
+    echo "the wireless profiles NAM creates might not work."
   fi
 }
 
 ## Filter active network interfaces, ignoring any interfaces that are not
 ## ethernet or wireless
 Filter_Active_Interfaces () {
-  echo Looking for active interfaces...
+  echo "Looking for active interfaces..."
   echo ""
+  ## Unset Active_Interfaces array in case the array already exist
   unset Active_Interfaces
   sleep 1
   readarray -t Active_Interfaces <<< "$(nmcli -t -f NAME,UUID,TYPE,DEVICE con show --active
  )"
   for i in ${Active_Interfaces[@]}; do
-      # Filter out the real connections
+      ## Filter out the real connections
       i=$(echo $i | egrep 'wireless|ethernet')
-      # Filter out the actual interface name
+      ## Filter out the actual interface name
       i=$(echo $i | cut -d ":" -f 4)
-      # Add the names into the new array
+      ## Add the names into the new array
       Filtered_Active_Interfaces+=($i)
     done
 }
@@ -102,11 +79,11 @@ Menu_Active_Interfaces (){
      sleep 1
      exit 0
   elif [[ ${#Filtered_Active_Interfaces[@]} -eq 1 ]]; then
-    echo Only ${Filtered_Active_Interfaces[0]} is connected, and will be used
-     option=${Filtered_Active_Interfaces[0]}
-     sleep 1
+      echo Only ${Filtered_Active_Interfaces[0]} is connected, and will be used
+      option=${Filtered_Active_Interfaces[0]}
+      sleep 1
   else
-    echo "Please select the interface you wish to use"
+  echo "Please select the interface you wish to use"
     arrsize=$(expr 1 + $1 )
     select option in "${@:2}"; do
       if [ "$REPLY" -eq "$arrsize" ];
