@@ -29,8 +29,9 @@ Root_Check () {
 Log_And_Variables () {
 
 	####  Varibale	####
-    line="\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-"
-    logpath=/tmp/NAM.log
+  #  line="\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-"
+	line=$(printf '%40s\n' | tr ' ' -)
+  logpath=/tmp/NAM.log
 	####  Varibale	####
 
 
@@ -187,7 +188,6 @@ User_Prompt () {
       New_DNS1=$DNS2
     fi
   fi
-  Verify_Info
 }
 
 
@@ -230,7 +230,7 @@ Profile_Prompt () {
   read -p "Enter the name of the new profile : " Temp_Profile
   nmcli con show "$Temp_Profile"  &> /dev/null
   if [[ $? == 0 ]];then
-    Clone_Profile_loop "$Temp_Profile"
+    Overwrite_Profile_Prompt "$Temp_Profile"
   else
     New_Profile=$Temp_Profile
   fi
@@ -284,7 +284,6 @@ Main () {
 	User_Prompt
 	Verify_Info
 	Profile_Prompt
-	Overwrite_Profile_Prompt
 	Clone_Profile
 	Activate_New_Profile
 }
