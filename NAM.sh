@@ -197,7 +197,7 @@ User_Prompt () {
 ## asks the user to verify the information
 Verify_Info () {
   echo $line
-	echo ""
+  echo ""
   echo $line
   echo "IP address : $New_Ip/$New_Netmask"
   echo " "
@@ -209,14 +209,16 @@ Verify_Info () {
   echo " "
   echo " "
   read -p "Is the information correct? [Y,n]" currect
-	until [[ $currect == "" ]] || [[ $currect == "y" ]] ||\
-	 [[ $currect == "Y" ]] || [[ $currect == "n" ]] || \
-	 [[ $currect == "N" ]]; do
-		echo "Invalid input, try again"
-		read -p "Is the information correct? [Y,n]" currect
-	done
+  until [[ $currect == "" ]] || [[ $currect == "y" ]] ||\
+  [[ $currect == "Y" ]] || [[ $currect == "n" ]] || \
+  [[ $currect == "N" ]]; do
+	echo "Invalid input, try again"
+	read -p "Is the information correct? [Y,n]" currect
+  done
+
   if [[ $currect == "" ]] || [[ $currect == "y" ]] || [[ $currect == "Y" ]]; then
     :
+
   elif [[ $currect == "n" ]] || [[ $currect == "N" ]]; then
     echo " "
     echo $line
@@ -234,7 +236,7 @@ Profile_Prompt () {
 	while [[ $Temp_Profile == "" ]]; do
   	read -p "Enter the name of the new profile : " Temp_Profile
 	done
-  nmcli con show "$Temp_Profile"  &> /dev/null
+  nmcli con show "$Temp_Profile"  &> $logpath
   if [[ $? == 0 ]];then
     Overwrite_Profile_Prompt "$Temp_Profile"
   else
@@ -248,7 +250,7 @@ Profile_Prompt () {
 Overwrite_Profile_Prompt () {
   read -p "$1 already exists, override? [N,y]" Override
   if  [[ $Override == "y" ]] || [[ $Override == "Y" ]]; then
-    nmcli con delete "$1"
+    nmcli con delete "$1" &> $logpath
   elif [[ $Override == "" ]] || [[ $Override == "n" ]] || [[ $Override == "N" ]]; then
     echo " "
     echo $line
@@ -267,15 +269,15 @@ Clone_Profile () {
   Active_Profile=$( nmcli --t -f NAME,UUID,TYPE,DEVICE con show --active |  grep $option |cut -d ":" -f 1 )
   sleep 1s
   echo "Cloning profile..."
-  nmcli con clone "$Active_Profile" "$New_Profile"
-  nmcli con mod "$New_Profile" ipv4.method manual ipv4.addr "$New_Ip/$New_Netmask" ipv4.gateway "$New_Gateway" ipv4.dns "$New_DNS1 $New_DNS2"
+  nmcli con clone "$Active_Profile" "$New_Profile" &> $logpath
+  nmcli con mod "$New_Profile" ipv4.method manual ipv4.addr "$New_Ip/$New_Netmask" ipv4.gateway "$New_Gateway" ipv4.dns "$New_DNS1 $New_DNS2" $> $logpath
  }
 
 
 ## This function deactivates the active profile and activates the new profile,
 ## then informs the user
 Activate_New_Profile () {
-   nmcli con down "$Active_Profile" && nmcli con up "$New_Profile" -a
+   nmcli con down "$Active_Profile" && nmcli con up "$New_Profile" -a &> $logpath
    echo "Profile $New_Profile activated"
  }
 
