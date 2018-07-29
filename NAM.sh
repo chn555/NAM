@@ -31,23 +31,9 @@ Log_And_Variables () {
 	####  Varibale	####
     line="\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-"
 	user_path=/home/$orig_user
-	logpath=$user_path/Automated-Installer-Log/error.log
+	logpath=/tmp/NAM.log
 	####  Varibale	####
-
-	## Check if log folder exits, if not, create it
-	if ! [[ -d $user_path/Automated-Installer-Log ]]; then
-		sudo runuser -l $orig_user -c "mkdir $user_path/Automated-Installer-Log"
-	fi
-
-	## Check if error log exits, if not, create it
-	if ! [[ -e $errorpath ]]; then
-		sudo runuser -l $orig_user -c "touch $errorpath"
-	fi
-
-	## Check if output log exits, if not, create it
-	if ! [[ -e $outputpath ]]; then
-		sudo runuser -l $orig_user -c "touch $outputpath"
-	fi
+	touch $logpath
 }
 
 ## Check if kde is installed, if it is, notify the user that wireless profiles
