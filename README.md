@@ -32,5 +32,5 @@ This project is licensed under the GPLv3 License - see the [LICENSE.md](LICENSE.
 
 ## Acknowledgments
 
-* Thanks to br0k3ngl255 for mentoring the project
+* Thanks to  [silent-mobius](https://github.com/silent-mobius) for mentoring the project
 * Thanks to bigrush for taking the project and restarting development
