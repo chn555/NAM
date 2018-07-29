@@ -14,7 +14,7 @@ This script requires nmcli
 
 ```
 git clone https://github.com/chn555/NAM
-bash functions.sh
+bash NAM.sh
 ```
 
 The script itself is self-explanatory
@@ -23,6 +23,7 @@ The script itself is self-explanatory
 ## Authors
 
 * **chn555** - *Initial work* - [chn555](https://github.com/chn555)
+* **BigRush** - *Initial work* - [BigRush](https://github.com/BigRush)
 
 ## License
 
@@ -31,4 +32,4 @@ This project is licensed under the GPLv3 License - see the [LICENSE.md](LICENSE.
 ## Acknowledgments
 
 * Thanks to br0k3ngl255 for mentoring the project
-* Thanks to bigrush for testing
+* Thanks to bigrush for taking the project and restarting development
