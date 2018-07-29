@@ -1,6 +1,7 @@
 # NAM
 
 The Network Automated Manager is a short script designed to easily set a static ip
+It detects active network connections and changes them to static connections
 
 ## Getting Started
 
@@ -17,13 +18,13 @@ git clone https://github.com/chn555/NAM
 bash NAM.sh
 ```
 
-The script itself is self-explanatory
+The script itself is interactive
 
 
 ## Authors
 
-* **chn555** - *Initial work* - [chn555](https://github.com/chn555)
-* **BigRush** - *Initial work* - [BigRush](https://github.com/BigRush)
+* **chn555** - *Development* - [chn555](https://github.com/chn555)
+* **BigRush** - *Development* - [BigRush](https://github.com/BigRush)
 
 ## License
 
