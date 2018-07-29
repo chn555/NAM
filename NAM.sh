@@ -272,3 +272,19 @@ Activate_New_Profile () {
    nmcli con down "$Active_Profile" && nmcli con up "$New_Profile"
    echo "Profile $New_Profile activated"
  }
+
+
+Main () {
+	Root_Check
+	Log_And_Variables
+	KDE_Check
+	Filter_Active_Interfaces
+	Active_Interfaces_Menu "${#Filtered_Active_Interfaces[@]}" "${Filtered_Active_Interfaces[@]}"
+	Interface_Info
+	User_Prompt
+	Verify_Info
+	Profile_Prompt
+	Overwrite_Profile_Prompt
+	Clone_Profile
+	Activate_New_Profile
+}
