@@ -10,14 +10,56 @@
 # Description :  NAM (Network Automated Manager).
 #				 This script will use nmcli to set up static ip efortlessly.
 #
-# Version :  1.0.0
+# Version :  2.0.1
 ################################################################################
+NAM_Version="2.0.1"
+
+OPTS=$(getopt -o hfVi:p: --long ipv4:,gateway:,netmask:,dns1:,dns2:,runasroot,help -n 'parse-options' -- "$@")
+if [ $? != 0 ] ; then
+	echo "Invalid arguments" >&2
+	echo "Use -h for help"
+	exit 1 ;
+fi
+eval set -- "$OPTS"
+
+Help_ARG=0
+Force_ARG=0
+Version_ARG=0
+Interface_ARG=0
+Profile_ARG=0
+Ipv4_ARG=0
+Gateway_ARG=0
+Netmask_ARG=0
+DNS1_ARG=0
+DNS2_ARG=0
+Runasroot_ARG=0
+
+
+while true; do
+	case "$1" in
+		-h|--help) Help_ARG=1; shift ;;
+		-f )	Force_ARG=1; shift ;;
+		-V ) Version_ARG=1; shift ;;
+		-i ) Interface_ARG=$2; shift 2;;
+		-p ) Profile_ARG=$2; shift 2 ;;
+		--ipv4 ) Ipv4_ARG=$2; shift 2 ;;
+		--gateway ) Gateway_ARG=$2; shift 2 ;;
+		--netmask ) Netmask_ARG=$2; shift 2 ;;
+		--dns1 ) DNS1_ARG=$2; shift 2 ;;
+		--dns2 ) DNS2_ARG=$2; shift 2 ;;
+		--runasroot ) Runasroot_ARG=1; shift ;;
+		-- ) shift; break ;;
+		-* | --*) Help_ARG=1; shift;;
+		* ) break ;;
+	esac
+done
 
 
 ## Checks if the script runs as root
 Root_Check () {
-
-	if  [[ $EUID -eq 0 ]]; then
+	if [[ $Runasroot_ARG -eq 1 ]]; then
+		return 0
+	elif  [[ $EUID -eq 0 ]]; then
 		printf "$line\n"
 		printf "This option must not run with root privileges\n"
 		printf "$line\n"
@@ -85,6 +127,10 @@ Active_Interfaces_Menu (){
         echo Only ${Filtered_Active_Interfaces[0]} is connected, and will be used
         option=${Filtered_Active_Interfaces[0]}
         sleep 1
+		elif [[ Scripted -eq 1 ]]; then
+		 		echo  "More then one interface was found,
+				this is not supported in non-interactive mode,
+				please use -i to select an interface"
     else
         echo "Please select the interface you wish to use"
         arrsize=$(expr 1 + $1)
@@ -224,6 +270,7 @@ Verify_Info () {
     echo $line
     echo $line
     User_Prompt
+		Verify_Info
   fi
 }
 
@@ -233,6 +280,7 @@ Verify_Info () {
 ## otherwise it will continue will the entered name.
 Profile_Prompt () {
 	echo $line
+	read -p "Enter the name of the new profile : " Temp_Profile
 	while [[ $Temp_Profile == "" ]]; do
   	read -p "Enter the name of the new profile : " Temp_Profile
 	done
@@ -241,6 +289,7 @@ Profile_Prompt () {
     Overwrite_Profile_Prompt "$Temp_Profile"
   else
     New_Profile=$Temp_Profile
+		Clone_Profile
   fi
 }
 
@@ -250,12 +299,13 @@ Profile_Prompt () {
 Overwrite_Profile_Prompt () {
   read -p "$1 already exists, override? [N,y]" Override
   if  [[ $Override == "y" ]] || [[ $Override == "Y" ]]; then
-    nmcli con delete "$1" &> $logpath
+		New_Profile=$Temp_Profile
+    nmcli con mod "$New_Profile" ipv4.method manual ipv4.addr "$New_Ip/$New_Netmask" ipv4.gateway "$New_Gateway" ipv4.dns "$New_DNS1 $New_DNS2" &> $logpath
+		Active_Profile=$( nmcli --t -f NAME,UUID,TYPE,DEVICE con show --active |  grep $option |cut -d ":" -f 1 )
   elif [[ $Override == "" ]] || [[ $Override == "n" ]] || [[ $Override == "N" ]]; then
     echo " "
     echo $line
-    echo $line
-    Profil_Prompt
+    Profile_Prompt
   else
     echo "Invalid input, try again"
     Overwrite_Profile_Prompt
@@ -270,31 +320,151 @@ Clone_Profile () {
   sleep 1s
   echo "Cloning profile..."
   nmcli con clone "$Active_Profile" "$New_Profile" &> $logpath
-  nmcli con mod "$New_Profile" ipv4.method manual ipv4.addr "$New_Ip/$New_Netmask" ipv4.gateway "$New_Gateway" ipv4.dns "$New_DNS1 $New_DNS2" $> $logpath
+  nmcli con mod "$New_Profile" ipv4.method manual ipv4.addr "$New_Ip/$New_Netmask" ipv4.gateway "$New_Gateway" ipv4.dns "$New_DNS1 $New_DNS2" &> $logpath
  }
 
 
 ## This function deactivates the active profile and activates the new profile,
 ## then informs the user
 Activate_New_Profile () {
-   nmcli con down "$Active_Profile" && nmcli con up "$New_Profile" -a &> $logpath
+   nmcli con down "$Active_Profile" && nmcli con up "$New_Profile" -a
    echo "Profile $New_Profile activated"
  }
 
+
+## Checks if the ip address conforms to ipv4 format
+Ipv4_Verify () {
+	oct='([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])'
+  ip4="^$oct\\.$oct\\.$oct\\.$oct$"
+	if [[ "$1" =~ $ip4 ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+## Display help to the user
+Help_Function () {
+printf "%s" "\
+Usage: nama --option \"value\" --option \"value\"
+nama (Network Automated Manager).
+This script will use nmcli to set up static ip efortlessly.
+
+Options:
+
+	-f			            	if profile name is used, force overwrite
+
+	-i <Active interface>       active interface to be used
+
+	-p <Profile name> 			name of the profile to be created
+
+    --ipv4 <ipv4 address> 		valid ipv4 address to be used
+
+	--netmask <netmask>			netmask to be used, in bit-length format
+
+	--gateway <gateway>			gateway address to be used
+
+	--dns1 <dns address>		primary name server address to be used
+
+	--dns2 <dns address>		secondary name server address to be used
+
+	--runasroot					Enable the option to run the script as root
+
+Example:
+
+	sudo nama -i enp0s3 -p test --ipv4 192.168.1.1 --netmask 24 --gateway 192.168.1.10 --dns1 1.1.1.1 --dns2 9.9.9.9 --runasroot
+For any bugs please report to https://github.com/chn555/nama/issues
+"
+}
+
 ## This script runs all the functions
 Main () {
-	echo $line
-	Root_Check
-	Log_And_Variables
-	KDE_Check
-	Filter_Active_Interfaces
-	Active_Interfaces_Menu "${#Filtered_Active_Interfaces[@]}" "${Filtered_Active_Interfaces[@]}"
-	Interface_Info
-	User_Prompt
-	Verify_Info
-	Profile_Prompt
-	Clone_Profile
-	Activate_New_Profile
+	if [[ $Version_ARG -eq 1 ]]; then
+		echo "NAM version $NAM_Version"
+	fi
+	## Verify that no argument is being used, and use the standard version
+	if [[ "$Ipv4_ARG" == 0 ]] && [[ $Gateway_ARG == 0 ]] && \
+	[[ $Netmask_ARG == 0 ]] && [[ $DNS1_ARG == 0 ]] && \
+	[[ $DNS2_ARG == 0 ]] && [[ $Profile_ARG == 0 ]] && \
+	[[ $Force_ARG -eq 0 ]] && [[ $Help_ARG -eq 0 ]] ; then
+		echo $line
+		Root_Check
+		Log_And_Variables
+		KDE_Check
+		Filter_Active_Interfaces
+		Active_Interfaces_Menu "${#Filtered_Active_Interfaces[@]}" "${Filtered_Active_Interfaces[@]}"
+		Interface_Info
+		User_Prompt
+		Verify_Info
+		Profile_Prompt
+		Activate_New_Profile
+		exit 0
+	## Check if all the flags needed to be configured are used, and no interfearing
+	## flags have been used
+elif [[ $Ipv4_ARG != 0 ]] && [[ $Gateway_ARG != 0 ]] && \
+	[[ $Netmask_ARG != 0 ]] && [[ $DNS1_ARG != 0 ]] && \
+	[[ $DNS2_ARG != 0 ]] && [[ $Profile_ARG != 0 ]] && \
+	[[ $Help_ARG -eq 0 ]] ; then
+		Scripted=1
+		if ! Ipv4_Verify $Ipv4_ARG ;then
+			echo "IP address is invalid, exiting" |tee $logpath
+			exit 1
+		elif ! Ipv4_Verify $Gateway_ARG ;then
+			echo "gateway is invalid, exiting" |tee $logpath
+			exit 1
+		elif ! Ipv4_Verify $DNS1_ARG ;then
+			echo "DNS1 is invalid, exiting" |tee $logpath
+			exit 1
+		elif ! Ipv4_Verify $DNS2_ARG ;then
+			echo "DNS2 is invalid, exiting" |tee $logpath
+			exit 1
+		elif [[ ! "$Netmask_ARG" -gt 1  ||  ! "$Netmask_ARG" -lt 32 ]] ;then
+			echo "Netmask is invalid, exiting" |tee $logpath
+			exit
+		fi
+		Root_Check
+		Log_And_Variables
+		KDE_Check
+		if [[ $Interface_ARG == 0 ]]; then
+			Filter_Active_Interfaces
+			Active_Interfaces_Menu "${#Filtered_Active_Interfaces[@]}" "${Filtered_Active_Interfaces[@]}"
+		elif ! [[ -z $(nmcli --t -f NAME,UUID,TYPE,DEVICE con show --active |  grep $Interface_ARG |cut -d ":" -f 1) ]] ; then
+			option=$Interface_ARG
+		else
+			echo "$Interface_ARG in not an active interface, exiting"
+			exit 1
+		fi
+		New_Ip=$Ipv4_ARG
+		New_Netmask=$Netmask_ARG
+		New_Gateway=$Gateway_ARG
+		New_DNS1=$DNS1_ARG
+		New_DNS2=$DNS2_ARG
+		nmcli con show "$Profile_ARG"  &> $logpath
+	  if [[ $? -eq 0 ]] && [[ $Force_ARG -eq 0 ]];then
+			echo "Profile name is already in use,"
+			echo "you can use -f to force overwrite"
+	    exit 1
+		elif nmcli con show "$Profile_ARG"  &> $logpath && [[ $Force_ARG -ne 0 ]]; then
+			New_Profile=$Profile_ARG
+			Active_Profile=$( nmcli --t -f NAME,UUID,TYPE,DEVICE con show --active |  grep $option |cut -d ":" -f 1 )
+			nmcli con mod "$New_Profile" ipv4.method manual ipv4.addr "$New_Ip/$New_Netmask" ipv4.gateway "$New_Gateway" ipv4.dns "$New_DNS1 $New_DNS2" &> $logpath
+	  else
+	    New_Profile=$Profile_ARG
+			Clone_Profile
+	  fi
+		Activate_New_Profile
+		exit 0
+	## check if only the Help flag is on
+elif [[ $Ipv4_ARG == 0 ]] && [[ $Gateway_ARG == 0 ]] && \
+	[[ $Netmask_ARG == 0 ]] && [[ $DNS1_ARG == 0 ]] && \
+	[[ $DNS2_ARG == 0 ]] && [[ $Profile_ARG == 0 ]] && \
+	[[ $Force_ARG -eq 0 ]] && [[ $Help_ARG -ne 0 ]] ; then
+		Help_Function
+		exit 0
+	else
+		echo "Missing arguments, use -h for help"
+		exit 1
+	fi
 }
 
 Main
