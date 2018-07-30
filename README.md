@@ -1,7 +1,8 @@
-# NAM
+# NAMA
 
-The Network Automated Manager is a short script designed to easily set a static ip.  
+The Network Automated MAnager is a short script designed to easily set a static ip.  
 It detects active network connections and changes them to static connections
+
 
 ## Getting Started
 
@@ -14,7 +15,7 @@ This script requires nmcli
 ### Using
 
 ```
-git clone https://github.com/chn555/NAM
+git clone https://github.com/chn555/nama
 bash NAM.sh
 ```
 
