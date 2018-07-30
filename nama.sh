@@ -352,23 +352,23 @@ This script will use nmcli to set up static ip efortlessly.
 
 Options:
 
-	-f			            	if profile name is used, force overwrite
+    -f                          if profile name is used, force overwrite
 
-	-i <Active interface>       active interface to be used
+    -i <Active interface>       active interface to be used
 
-	-p <Profile name> 			name of the profile to be created
+    -p <Profile name>           name of the profile to be created
 
-    --ipv4 <ipv4 address> 		valid ipv4 address to be used
+    --ipv4 <ipv4 address>       valid ipv4 address to be used
 
-	--netmask <netmask>			netmask to be used, in bit-length format
+    --netmask <netmask>         netmask to be used, in bit-length format
 
-	--gateway <gateway>			gateway address to be used
+    --gateway <gateway>         gateway address to be used
 
-	--dns1 <dns address>		primary name server address to be used
+    --dns1 <dns address>        primary name server address to be used
 
-	--dns2 <dns address>		secondary name server address to be used
+    --dns2 <dns address>        secondary name server address to be used
 
-	--runasroot					Enable the option to run the script as root
+    --runasroot                 Enable the option to run the script as root
 
 
 Example:
