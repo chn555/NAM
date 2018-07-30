@@ -12,8 +12,8 @@
 #
 # Version :  2.0.0
 ################################################################################
-$NAM_Version = "2.0.0
-"
+NAM_Version="2.0.0"
+
 OPTS='getops -o hfVi:p: --long ipv4:,gateway:,netmask:,dns1:,dns2:,runasroot,help -n "parse-options" -- "$@"'
 
 eval set -- $OPTS
@@ -121,7 +121,7 @@ Active_Interfaces_Menu (){
         echo Only ${Filtered_Active_Interfaces[0]} is connected, and will be used
         option=${Filtered_Active_Interfaces[0]}
         sleep 1
-		elif [[ Scripted-eq 1 ]]; then
+		elif [[ Scripted -eq 1 ]]; then
 		 		echo  "More then one interface was found,
 				this is not supported in non-interactive mode,
 				please use -i to select an interface"
@@ -387,7 +387,7 @@ Main () {
 		Root_Check
 		Log_And_Variables
 		KDE_Check
-		if [[ Interface_ARG -eq 0]]; then
+		if [[ Interface_ARG -eq 0 ]]; then
 			Filter_Active_Interfaces
 			Active_Interfaces_Menu "${#Filtered_Active_Interfaces[@]}" "${Filtered_Active_Interfaces[@]}"
 		fi
@@ -417,6 +417,6 @@ Main () {
 		Help_Function
 		exit 0
 	fi
-
+}
 
 Main
