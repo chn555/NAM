@@ -2,12 +2,12 @@ PREFIX ?= /usr
 MANDIR ?= $(PREFIX)/share/man
 
 all:
-	@echo Run \'make install\' to install NAM.
+	@echo Run \'make install\' to install NAMA.
 
 install:
-	@mkdir -p $(DESTDIR)$(PREFIX)/bin
-	@cp -p NAM.sh $(DESTDIR)$(PREFIX)/bin/NAM
-	@chmod 755 $(DESTDIR)$(PREFIX)/bin/NAM
+	@mkdir -p $(DESTDIR)$(PREFIX)/nama
+	@cp -p nama.sh $(DESTDIR)$(PREFIX)/bin/nama
+	@chmod 755 $(DESTDIR)$(PREFIX)/bin/nama
 
 uninstall:
-	@rm -rf $(DESTDIR)$(PREFIX)/bin/NAM
+	@rm -rf $(DESTDIR)$(PREFIX)/bin/nama
