@@ -10,9 +10,45 @@
 # Description :  NAM (Network Automated Manager).
 #				 This script will use nmcli to set up static ip efortlessly.
 #
-# Version :  1.0.0
+# Version :  2.0.0
 ################################################################################
+$NAM_Version = "2.0.0
+"
+OPTS='getops -o hfVi:p: --long ipv4:,gateway:,netmask:,dns1:,dns2:,runasroot,help -n "parse-options" -- "$@"'
 
+eval set -- $OPTS
+
+Help_ARG=0
+Force_ARG=0
+Version_ARG=0
+Interface_ARG=0
+Profile_ARG=0
+Ipv4_ARG=0
+Gateway_ARG=0
+Netmask_ARG=0
+DNS1_ARG=0
+DNS2_ARG=0
+Runasroot_ARG=0
+
+
+while true; do
+  case "$1" in
+		-h | --help )    Help_ARG=1; shift ;;
+		-f )	Force_ARG=1; shift ;;
+		-V ) Version_ARG=1; shift ;;
+		-i ) Interface_ARG=$2; shift 2;;
+		-p ) Profile_ARG=$2; shift 2 ;;
+		--ipv4 ) Ipv4_ARG=$2; shift 2 ;;
+		--gateway ) Gateway_ARG=$2; shift 2 ;;
+		--netmask ) Netmask_ARG=$2; shift 2 ;;
+		--dns1 ) DNS1_ARG=$2; shift 2 ;;
+		--dns2 ) DNS2_ARG=$2; shift 2 ;;
+		--runasroot ) Runasroot_ARG=1; shift ;;
+    -- ) shift; break ;;
+		-* | --*) Help_ARG=1; shift;;
+    * ) break ;;
+  esac
+done
 
 ## Checks if the script runs as root
 Root_Check () {
@@ -85,6 +121,10 @@ Active_Interfaces_Menu (){
         echo Only ${Filtered_Active_Interfaces[0]} is connected, and will be used
         option=${Filtered_Active_Interfaces[0]}
         sleep 1
+		elif [[ Scripted-eq 1 ]]; then
+		 		echo  "More then one interface was found,
+				this is not supported in non-interactive mode,
+				please use -i to select an interface"
     else
         echo "Please select the interface you wish to use"
         arrsize=$(expr 1 + $1)
@@ -281,20 +321,102 @@ Activate_New_Profile () {
    echo "Profile $New_Profile activated"
  }
 
+
+## Checks if the ip address conforms to ipv4 format
+Ipv4_Verify () {
+	oct='([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])'
+  ip4="^$oct\\.$oct\\.$oct\\.$oct$"
+	if [[ "$1" =~ $ip4 ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+## Display help to the user
+Help_Function () {
+	echo "this is Help"
+}
+
 ## This script runs all the functions
 Main () {
-	echo $line
-	Root_Check
-	Log_And_Variables
-	KDE_Check
-	Filter_Active_Interfaces
-	Active_Interfaces_Menu "${#Filtered_Active_Interfaces[@]}" "${Filtered_Active_Interfaces[@]}"
-	Interface_Info
-	User_Prompt
-	Verify_Info
-	Profile_Prompt
-	Clone_Profile
-	Activate_New_Profile
-}
+	if [[ $Version_ARG -eq 1 ]]; then
+		echo "NAM version $NAM_Version"
+	fi
+	## Verify that no argument is being used, and use the standard version
+	if [[ $Ipv4_ARG -eq 0 ]] && [[ $Gateway_ARG -eq 0 ]] && \
+	[[ $Netmask_ARG -eq 0 ]] && [[ $DNS1_ARG -eq 0 ]] && \
+	[[ $DNS2_ARG -eq 0 ]] && [[ $Profile_ARG -eq 0 ]] && \
+	[[ $Force_ARG -eq 0 ]] && [[ $Help_ARG -eq 0 ]] ; then
+		echo $line
+		Root_Check
+		Log_And_Variables
+		KDE_Check
+		Filter_Active_Interfaces
+		Active_Interfaces_Menu "${#Filtered_Active_Interfaces[@]}" "${Filtered_Active_Interfaces[@]}"
+		Interface_Info
+		User_Prompt
+		Verify_Info
+		Profile_Prompt
+		Clone_Profile
+		Activate_New_Profile
+		exit 0
+	## Check if all the flags needed to be configured are used, and no interfearing
+	## flags have been used
+	elif [[ $Ipv4_ARG -ne 0 ]] && [[ $Gateway_ARG -ne 0 ]] && \
+	[[ $Netmask_ARG -ne 0 ]] && [[ $DNS1_ARG -ne 0 ]] && \
+	[[ $DNS2_ARG -ne 0 ]] && [[ $Profile_ARG -ne 0 ]] && \
+	[[ $Help_ARG -eq 0 ]] ; then
+		Scripted=1
+		if ! Ipv4_Verify $Ipv4_ARG ;then
+			echo "IP address is invalid, exiting" |tee $logpath
+			exit 1
+		elif ! Ipv4_Verify $Gateway_ARG ;then
+			echo "gateway is invalid, exiting" |tee $logpath
+			exit 1
+		elif ! Ipv4_Verify $DNS1_ARG ;then
+			echo "DNS1 is invalid, exiting" |tee $logpath
+			exit 1
+		elif ! Ipv4_Verify $DNS2_ARG ;then
+			echo "DNS2 is invalid, exiting" |tee $logpath
+			exit 1
+		elif [[ ! "$New_Netmask" -gt 1  ||  ! $New_Netmask -lt 32 ]] ;then
+			echo "Netmask is invalid, exiting" |tee $logpath
+			exit
+		fi
+		Root_Check
+		Log_And_Variables
+		KDE_Check
+		if [[ Interface_ARG -eq 0]]; then
+			Filter_Active_Interfaces
+			Active_Interfaces_Menu "${#Filtered_Active_Interfaces[@]}" "${Filtered_Active_Interfaces[@]}"
+		fi
+		nmcli con show "$Profile_ARG"  &> $logpath
+	  if [[ $? -eq 0 ]] && [[ $Force_ARG -eq 0 ]];then
+			echo "Profile name is already in use,
+			you can use -f to force overwrite"
+	    exit 1
+		elif [[ $? -eq 0 ]] && [[ $Force_ARG -ne 0 ]]; then
+			New_Profile=$Profile_ARG
+	  else
+	    New_Profile=$Profile_ARG
+	  fi
+		New_Ip=$Ipv4_ARG
+		New_Netmask=$Netmask_ARG
+		New_Gateway=$Gateway_ARG
+		New_DNS1=$DNS1_ARG
+		New_DNS2=$DNS2_ARG
+		Clone_Profile
+		Activate_New_Profile
+		exit 0
+	## check if only the Help flag is on
+	elif [[ $Ipv4_ARG -eq 0 ]] && [[ $Gateway_ARG -eq 0 ]] && \
+	[[ $Netmask_ARG -eq 0 ]] && [[ $DNS1_ARG -eq 0 ]] && \
+	[[ $DNS2_ARG -eq 0 ]] && [[ $Profile_ARG -eq 0 ]] && \
+	[[ $Force_ARG -eq 0 ]] && [[ $Help_ARG -ne 0 ]] ; then
+		Help_Function
+		exit 0
+	fi
+
 
 Main
