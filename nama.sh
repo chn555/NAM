@@ -386,7 +386,8 @@ Authors:
 
 
 For any bugs please report to https://github.com/chn555/nama/issues
-	"
+
+"
 }
 
 ## This script runs all the functions
