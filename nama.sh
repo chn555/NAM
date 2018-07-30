@@ -345,36 +345,48 @@ Ipv4_Verify () {
 
 ## Display help to the user
 Help_Function () {
-printf "%s" "\
-Usage: nama --option \"value\" --option \"value\"
-nama (Network Automated Manager).
-This script will use nmcli to set up static ip efortlessly.
+	printf "%s" "\
+	Usage: nama --option \"value\" --option \"value\"
+	nama (Network Automated Manager)
+	This script will use nmcli to set up static ip efortlessly.
 
-Options:
+	Options:
 
-	-f			            	if profile name is used, force overwrite
+		-f			            	if profile name is used, force overwrite
 
-	-i <Active interface>       active interface to be used
+		-i <Active interface>       active interface to be used
 
-	-p <Profile name> 			name of the profile to be created
+		-p <Profile name> 			name of the profile to be created
 
-    --ipv4 <ipv4 address> 		valid ipv4 address to be used
+	    --ipv4 <ipv4 address> 		valid ipv4 address to be used
 
-	--netmask <netmask>			netmask to be used, in bit-length format
+		--netmask <netmask>			netmask to be used, in bit-length format
 
-	--gateway <gateway>			gateway address to be used
+		--gateway <gateway>			gateway address to be used
 
-	--dns1 <dns address>		primary name server address to be used
+		--dns1 <dns address>		primary name server address to be used
 
-	--dns2 <dns address>		secondary name server address to be used
+		--dns2 <dns address>		secondary name server address to be used
 
-	--runasroot					Enable the option to run the script as root
+		--runasroot					Enable the option to run the script as root
 
-Example:
 
-	sudo nama -i enp0s3 -p test --ipv4 192.168.1.1 --netmask 24 --gateway 192.168.1.10 --dns1 1.1.1.1 --dns2 9.9.9.9 --runasroot
-For any bugs please report to https://github.com/chn555/nama/issues
-"
+	Example:
+
+		sudo nama -i enp0s3 -p test --ipv4 192.168.1.1 --netmask 24 --gateway 192.168.1.10 --dns1 1.1.1.1 --dns2 9.9.9.9 --runasroot
+
+	Authors:
+
+		chn555
+			https://github.com/chn555
+
+		BigRush
+			https://github.com/BigRush
+
+
+
+	For any bugs please report to https://github.com/chn555/nama/issues
+	"
 }
 
 ## This script runs all the functions
