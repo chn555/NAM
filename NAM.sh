@@ -14,9 +14,9 @@
 ################################################################################
 NAM_Version="2.0.0"
 
-OPTS='getops -o hfVi:p: --long ipv4:,gateway:,netmask:,dns1:,dns2:,runasroot,help -n "parse-options" -- "$@"'
+OPTS=$(getopt -o hfVi:p: --long ipv4:,gateway:,netmask:,dns1:,dns2:,runasroot,help -n 'parse-options' -- "$@")
 
-eval set -- $OPTS
+eval set -- "$OPTS"
 
 Help_ARG=0
 Force_ARG=0
@@ -33,7 +33,7 @@ Runasroot_ARG=0
 
 while true; do
   case "$1" in
-		-h | --help )    Help_ARG=1; shift ;;
+		-h|--help) Help_ARG=1; shift ;;
 		-f )	Force_ARG=1; shift ;;
 		-V ) Version_ARG=1; shift ;;
 		-i ) Interface_ARG=$2; shift 2;;
@@ -49,6 +49,7 @@ while true; do
     * ) break ;;
   esac
 done
+
 
 ## Checks if the script runs as root
 Root_Check () {
@@ -264,6 +265,7 @@ Verify_Info () {
     echo $line
     echo $line
     User_Prompt
+		Verify_Info
   fi
 }
 
@@ -273,6 +275,7 @@ Verify_Info () {
 ## otherwise it will continue will the entered name.
 Profile_Prompt () {
 	echo $line
+	read -p "Enter the name of the new profile : " Temp_Profile
 	while [[ $Temp_Profile == "" ]]; do
   	read -p "Enter the name of the new profile : " Temp_Profile
 	done
@@ -281,6 +284,7 @@ Profile_Prompt () {
     Overwrite_Profile_Prompt "$Temp_Profile"
   else
     New_Profile=$Temp_Profile
+		Clone_Profile
   fi
 }
 
@@ -290,12 +294,11 @@ Profile_Prompt () {
 Overwrite_Profile_Prompt () {
   read -p "$1 already exists, override? [N,y]" Override
   if  [[ $Override == "y" ]] || [[ $Override == "Y" ]]; then
-    nmcli con delete "$1" &> $logpath
+    nmcli con mod "$New_Profile" ipv4.method manual ipv4.addr "$New_Ip/$New_Netmask" ipv4.gateway "$New_Gateway" ipv4.dns "$New_DNS1 $New_DNS2" &> $logpath
   elif [[ $Override == "" ]] || [[ $Override == "n" ]] || [[ $Override == "N" ]]; then
     echo " "
     echo $line
-    echo $line
-    Profil_Prompt
+    Profile_Prompt
   else
     echo "Invalid input, try again"
     Overwrite_Profile_Prompt
@@ -310,14 +313,14 @@ Clone_Profile () {
   sleep 1s
   echo "Cloning profile..."
   nmcli con clone "$Active_Profile" "$New_Profile" &> $logpath
-  nmcli con mod "$New_Profile" ipv4.method manual ipv4.addr "$New_Ip/$New_Netmask" ipv4.gateway "$New_Gateway" ipv4.dns "$New_DNS1 $New_DNS2" $> $logpath
+  nmcli con mod "$New_Profile" ipv4.method manual ipv4.addr "$New_Ip/$New_Netmask" ipv4.gateway "$New_Gateway" ipv4.dns "$New_DNS1 $New_DNS2" &> $logpath
  }
 
 
 ## This function deactivates the active profile and activates the new profile,
 ## then informs the user
 Activate_New_Profile () {
-   nmcli con down "$Active_Profile" && nmcli con up "$New_Profile" -a &> $logpath
+   nmcli con down "$Active_Profile" && nmcli con up "$New_Profile" -a
    echo "Profile $New_Profile activated"
  }
 
@@ -358,7 +361,6 @@ Main () {
 		User_Prompt
 		Verify_Info
 		Profile_Prompt
-		Clone_Profile
 		Activate_New_Profile
 		exit 0
 	## Check if all the flags needed to be configured are used, and no interfearing
@@ -391,22 +393,23 @@ Main () {
 			Filter_Active_Interfaces
 			Active_Interfaces_Menu "${#Filtered_Active_Interfaces[@]}" "${Filtered_Active_Interfaces[@]}"
 		fi
-		nmcli con show "$Profile_ARG"  &> $logpath
-	  if [[ $? -eq 0 ]] && [[ $Force_ARG -eq 0 ]];then
-			echo "Profile name is already in use,
-			you can use -f to force overwrite"
-	    exit 1
-		elif [[ $? -eq 0 ]] && [[ $Force_ARG -ne 0 ]]; then
-			New_Profile=$Profile_ARG
-	  else
-	    New_Profile=$Profile_ARG
-	  fi
 		New_Ip=$Ipv4_ARG
 		New_Netmask=$Netmask_ARG
 		New_Gateway=$Gateway_ARG
 		New_DNS1=$DNS1_ARG
 		New_DNS2=$DNS2_ARG
-		Clone_Profile
+		nmcli con show "$Profile_ARG"  &> $logpath
+	  if [[ $? -eq 0 ]] && [[ $Force_ARG -eq 0 ]];then
+			echo "Profile name is already in use,"
+			echo "you can use -f to force overwrite"
+	    exit 1
+		elif [[ $? -eq 0 ]] && [[ $Force_ARG -ne 0 ]]; then
+			New_Profile=$Profile_ARG
+			nmcli con mod "$New_Profile" ipv4.method manual ipv4.addr "$New_Ip/$New_Netmask" ipv4.gateway "$New_Gateway" ipv4.dns "$New_DNS1 $New_DNS2" &> $logpath
+	  else
+	    New_Profile=$Profile_ARG
+			Clone_Profile
+	  fi
 		Activate_New_Profile
 		exit 0
 	## check if only the Help flag is on
