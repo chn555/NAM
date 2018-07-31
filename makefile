@@ -6,7 +6,7 @@ all:
 
 install:
 	@mkdir -p $(DESTDIR)$(PREFIX)/bin/
-	@cp -p nama.sh $(DESTDIR)$(PREFIX)/bin/nama
+	@cp -p nama $(DESTDIR)$(PREFIX)/bin/nama
 	@chmod 755 $(DESTDIR)$(PREFIX)/bin/nama
 
 uninstall:
