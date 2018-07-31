@@ -5,7 +5,7 @@ all:
 	@echo Run \'make install\' to install NAMA.
 
 install:
-	@mkdir -p $(DESTDIR)$(PREFIX)/nama
+	@mkdir -p $(DESTDIR)$(PREFIX)/bin/nama
 	@cp -p nama.sh $(DESTDIR)$(PREFIX)/bin/nama
 	@chmod 755 $(DESTDIR)$(PREFIX)/bin/nama
 
