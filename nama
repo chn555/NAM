@@ -10,10 +10,10 @@
 # Description :  nama (Network Automated Manager).
 #				 This script will use nmcli to set up static ip efortlessly.
 #
-# Version :  2.0.4
+# Version :  2.0.5
 ################################################################################
 ## Set the version of nama
-Nama_Version="2.0.4"
+Nama_Version="2.0.5"
 
 ## Set the available flags, and exit if the wrong ones are used
 OPTS=$(getopt -o hfVi:p: --long ipv4:,gateway:,netmask:,dns1:,dns2:,runasroot,help,version -n 'parse-options' -- "$@")
@@ -73,7 +73,10 @@ Root_Check () {
 	fi
 }
 
+
+## Check if NetworkManager is intalled, if not then it exits
 Network_Manager_check () {
+	## Define $line here to avoid calling Log_And_Variables
 	line=$(printf '%40s\n' | tr ' ' -)
 	if ! command -v nmcli ; then
 		echo $line
@@ -84,6 +87,8 @@ Network_Manager_check () {
 	fi
 
 }
+
+
 ## Declare function’s variables, create and validate log files
 Log_And_Variables () {
 
