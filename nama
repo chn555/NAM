@@ -7,21 +7,25 @@
 #
 # License :  GPLv3
 #
-# Description :  NAM (Network Automated Manager).
+# Description :  nama (Network Automated Manager).
 #				 This script will use nmcli to set up static ip efortlessly.
 #
-# Version :  2.0.3
+# Version :  2.0.4
 ################################################################################
-NAM_Version="2.0.3"
+## Set the version of nama
+Nama_Version="2.0.4"
 
+## Set the available flags, and exit if the wrong ones are used
 OPTS=$(getopt -o hfVi:p: --long ipv4:,gateway:,netmask:,dns1:,dns2:,runasroot,help,version -n 'parse-options' -- "$@")
 if [ $? != 0 ] ; then
 	echo "Invalid arguments" >&2
 	echo "Use -h for help"
 	exit 1 ;
 fi
+
 eval set -- "$OPTS"
 
+## Zeroize the variables that are used for flags
 Help_ARG=0
 Force_ARG=0
 Version_ARG=0
@@ -34,7 +38,7 @@ DNS1_ARG=0
 DNS2_ARG=0
 Runasroot_ARG=0
 
-
+## Set the variables, according to the flags used.
 while true; do
 	case "$1" in
 		-h|--help) Help_ARG=1; shift ;;
@@ -57,8 +61,10 @@ done
 
 ## Checks if the script runs as root
 Root_Check () {
+	## If runasroot flag is on, ignore the test
 	if [[ $Runasroot_ARG -ne 0 ]]; then
 		return 0
+	## otherwise confirm that the user is not running as root
 	elif  [[ $EUID -eq 0 ]]; then
 		printf "$line\n"
 		printf "This option must not run with root privileges\n"
@@ -71,7 +77,9 @@ Root_Check () {
 Log_And_Variables () {
 
 	####  Variable	####
+	## Define a line variable to be used as seperator
 	line=$(printf '%40s\n' | tr ' ' -)
+	## Define a logfile to be used for logs
   logpath=/tmp/NAM.log
 	####  Variable	####
 
@@ -86,6 +94,9 @@ Log_And_Variables () {
 ## Check if kde is installed, if it is, notify the user that wireless profiles
 ## might not work
 KDE_Check () {
+	## Check if the running desktop is KDE, since KDE stores wireless password
+	## on its own system, nmcli will not clone the password, it might ask for the
+	## password or it might not work at all
   if [[ $( echo $DESKTOP_SESSION | grep plasma ) ]] ; then
 		echo $line
     echo "NAM has detected you are using KDE,"
@@ -102,9 +113,10 @@ KDE_Check () {
 Filter_Active_Interfaces () {
   echo "Looking for active interfaces..."
   echo ""
-  ## Unset Active_Interfaces array in case the array already exist
+  ## Clear Active_Interfaces array in case the array already exist
   unset Active_Interfaces
   sleep 1
+	## Enters all the acrive profiles into an array
   readarray -t Active_Interfaces <<< "$(nmcli -t -f NAME,UUID,TYPE,DEVICE con show --active)"
   for i in ${Active_Interfaces[@]}; do
       ## Filter out the real connections
@@ -119,25 +131,38 @@ Filter_Active_Interfaces () {
 ## If more than one exists prompt the user, if only one exists chose that one
 ## and notify the user, if no interfaces exist exit the program
 Active_Interfaces_Menu (){
+		## If there are no active interfaces, exit the program.
     if [[ ${#Filtered_Active_Interfaces[@]} -eq 0 ]]; then
       echo No interface is found, exiting.
       sleep 1
       exit 0
+		## If there is only one interface, use it without asking
     elif [[ ${#Filtered_Active_Interfaces[@]} -eq 1 ]]; then
       echo Only ${Filtered_Active_Interfaces[0]} is connected, and will be used
       option=${Filtered_Active_Interfaces[0]}
       sleep 1
+		## If nama is running in non-interactive mode, no interface was specified
+		## and there is more then 1, exit.
 		elif [[ Scripted -eq 1 ]]; then
 		 	echo  "More then one interface was found,
 			this is not supported in non-interactive mode,
 			please use -i to select an interface"
+		## If there is more then 1 interface, and nama is running interactivly,
+		## prompt the user to select an interface
     else
       echo "Please select the interface you wish to use"
+			## Since the last selection is to exit, we increase the size of the array
+			## by one, treating the last element as exit
       arrsize=$(expr 1 + $1)
+			## Expand the array and use it as options
       select option in "${@:2}"; do
+				## If the selected number equals array size, that means that the user
+				## selected the option we added, the last option, which is to exit
         if [ "$REPLY" -eq "$arrsize" ]; then
           echo "Exiting..."
           break;
+				## If the user selection is between 1 and the actual size of the array,
+				## then inform the user of his selection.
         elif [ 1 -le "$REPLY" ] && [ "$REPLY" -le $((arrsize-1)) ]; then
           echo "You selected $option which is option $REPLY"
           sleep 1
@@ -156,11 +181,21 @@ Interface_Info () {
   echo "Gathering information..."
   echo ""
   sleep 1
-  # Extract ip, netmask and gateway
+  ## Extract ip, netmask and gateway
   declare Ip_Info=$(ip addr show $option | awk '{if(NR==3) print $2}')
   Ip=$(ip addr show $option | awk '{if(NR==3) print $2}' |cut -d "/" -f "1")
   Netmask=$(echo $Ip_Info | cut -d "/" -f "2")
   Gateway=$(ip route show  | awk 'NR==1 {print $3}')
+	## Verify that the collected information is valid, if not, zeroize the variables
+	if ! Ipv4_Verify $Ip ;then
+		Ip=""
+	fi
+	if ! Ipv4_Verify $Gateway ;then
+		Gateway=""
+	fi
+	if [[ ! "$Netmask" -gt 1  ||  ! "$Netmask" -lt 32 ]] ;then
+		Netmask=""
+	fi
 }
 
 
@@ -170,49 +205,57 @@ User_Prompt () {
   # The next 2 lines are used later to validate ipv4 addresses
   oct='([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])'
   ip4="^$oct\\.$oct\\.$oct\\.$oct$"
-  # these set the default DNS, using google. yes Alex i love being spied on.
-  DNS1="8.8.8.8"
-  DNS2="8.8.4.4"
+  ## These set the default DNS, using CloudFlare and google.
+	## because Tom doesnt like to be spied on but I love it
+  DNS1="1.1.1.1"
+  DNS2="8.8.8.8"
   echo "Please enter the information to be set."
   echo "If a field is left blank, the current setting will be used"
   sleep 1
   echo " "
+	## If input is empty, use the collected info.
+	## If collected info is empty, then keep asking the user
   read -p "Enter desired IP address [$Ip] : " New_Ip
-  if [[ $New_Ip == "" ]]; then
+  if [[ $New_Ip == "" ]] && [[ $ip != "" ]]; then
     New_Ip=$Ip
   else
     until [[  $New_Ip == "" ]] || [[  "$New_Ip" =~ $ip4 ]]; do
       read -p "Not a valid IP address. Re-enter [$Ip]  : " New_Ip
     done
-    if [[ $New_Ip == "" ]]; then
+    if [[ $New_Ip == "" ]] && [[ $ip != "" ]] ; then
       New_Ip=$Ip
     fi
   fi
   echo $line
   read -p "Enter desired Netmask [$Netmask] : " New_Netmask
-  if [[ $New_Netmask == "" ]]; then
+	## If input is empty, use the collected info.
+	## If collected info is empty, then keep asking the user
+  if [[ $New_Netmask == "" ]] && [[ $Netmask != "" ]] ; then
     New_Netmask=$Netmask
   else
     while [[ ! $New_Netmask == "" ]] && [[ ! "$New_Netmask" -gt 1  ||  ! $New_Netmask -lt 32 ]]  ; do
       read -p "Not a valid netmask, please re-enter your netmask in bit-length format [$Netmask] : " New_Netmask
     done
-    if [[ $New_Netmask == "" ]]; then
+    if [[ $New_Netmask == "" ]] && [[ $Netmask != "" ]] ; then
       New_Netmask=$Netmask
     fi
   fi
   echo $line
   read -p "Enter desired Gateway [$Gateway] : " New_Gateway
-  if [[ $New_Gateway == "" ]]; then
+	## If input is empty, use the collected info.
+	## If collected info is empty, then keep asking the user
+  if [[ $New_Gateway == "" ]] && [[ $Gateway != "" ]] ; then
     New_Gateway=$Gateway
   else
     while [[ ! $New_Gateway == "" ]] && [[ ! "$New_Gateway" =~ $ip4 ]]; do
       read -p "Not a valid Gateway. Re-enter [$Gateway] :  " New_Gateway
     done
-    if [[ $New_Gateway == "" ]]; then
+    if [[ $New_Gateway == "" ]] && [[ $Gateway != "" ]] ; then
       New_Gateway=$Gateway
     fi
   fi
   echo $line
+	## If input is empty, use default values
   read -p "Enter desired primary DNS [$DNS1] : " New_DNS1
   if [[ $New_DNS1 == "" ]]; then
     New_DNS1=$DNS1
@@ -226,6 +269,7 @@ User_Prompt () {
   fi
   echo $line
   read -p "Enter desired secondary DNS [$DNS2] : " New_DNS2
+	## If input is empty, use default values
   if [[ $New_DNS2 == "" ]]; then
     New_DNS2=$DNS2
   else
@@ -254,6 +298,9 @@ Verify_Info () {
   echo "Secondary DNS : $New_DNS2"
   echo " "
   echo " "
+	## Ask the user if the info is currect, if it is then continue,
+	## if not then return to User_Prompt.
+	## if invalid input try again
   read -p "Is the information correct? [Y,n]" currect
   until [[ $currect == "" ]] || [[ $currect == "y" ]] ||\
   			[[ $currect == "Y" ]] || [[ $currect == "n" ]] || \
@@ -278,10 +325,14 @@ Verify_Info () {
 ## otherwise it will continue will the entered name.
 Profile_Prompt () {
 	echo $line
+	## Ask the user for the name of the profile,
+	## if invalid input, try again
 	read -p "Enter the name of the new profile : " Temp_Profile
 	while [[ $Temp_Profile == "" ]]; do
   	read -p "Enter the name of the new profile : " Temp_Profile
 	done
+	## Verify that the profile doesnt exist, if it does, prompt the user to overwrite.
+	## otherwise continue
   nmcli con show "$Temp_Profile"  &> $logpath
   if [[ $? == 0 ]];then
     Overwrite_Profile_Prompt "$Temp_Profile"
@@ -295,6 +346,10 @@ Profile_Prompt () {
 ## This function will only be used if the user has entered a profile name that is in use.
 ## The function will notify him the name is in use and ask him to overwrite the existing profile.
 Overwrite_Profile_Prompt () {
+	## Ask the user to overwrite the existing profile
+	## if not, send him back to Profile_Prompt
+	## if yes, modify the existing profile.
+	## if invalid, try again
   read -p "$1 already exists, override? [N,y]" Override
   if  [[ $Override == "y" ]] || [[ $Override == "Y" ]]; then
 		New_Profile=$Temp_Profile
@@ -314,6 +369,7 @@ Overwrite_Profile_Prompt () {
 ## This function obtains the name of the active profile,
 ## clones it to the new name and modifies it to the use the user input.
 Clone_Profile () {
+	## Gather the name of the active profile, clone it and modify the cloned profile
   Active_Profile=$( nmcli --t -f NAME,UUID,TYPE,DEVICE con show --active |  grep $option |cut -d ":" -f 1 )
   sleep 1s
   echo "Cloning profile..."
@@ -325,9 +381,17 @@ Clone_Profile () {
 ## This function deactivates the active profile and activates the new profile,
 ## then informs the user
 Activate_New_Profile () {
- nmcli con down "$Active_Profile" && nmcli con up "$New_Profile" -a
- echo "Profile $New_Profile activated"
- }
+	## deactivate the active profile and activate the new one
+	nmcli con down "$Active_Profile" && nmcli con up "$New_Profile" -a
+	## Verify that the new profile is active, if not use the old one.
+	if [[ $( nmcli -t -f NAME,UUID,TYPE,DEVICE con show --active |  cut -d ":" -f 1)\
+	 == $New_Profile ]]; then
+		echo "Profile $New_Profile activated"
+	else
+		echo "There was a problem activating the profile, please try again"
+		nmcli con up "$Active_Profile"
+	fi
+}
 
 
 ## Checks if the ip address conforms to ipv4 format
@@ -395,7 +459,7 @@ Help_Function () {
 ## This script runs all the functions
 Main () {
 	if [[ $Version_ARG -ne 0 ]]; then
-		echo "NAM version $NAM_Version"
+		echo "nama version $Nama_Version"
 	fi
 	## Verify that no argument is being used, and use the standard version
 	if [[ "$Ipv4_ARG" == 0 ]] && [[ $Gateway_ARG == 0 ]] && \
@@ -420,7 +484,10 @@ Main () {
 	     [[ $Netmask_ARG != 0 ]] && [[ $DNS1_ARG != 0 ]] && \
 	     [[ $DNS2_ARG != 0 ]] && [[ $Profile_ARG != 0 ]] && \
 		   [[ $Help_ARG -eq 0 ]] ; then
+		## Set the variable to 1 to inform other functions that you are running in
+		## non-interactive mode
 		Scripted=1
+		## validate the network information entered by the user
 		if ! Ipv4_Verify $Ipv4_ARG ;then
 			echo "IP address is invalid, exiting" |tee $logpath
 			exit 1
@@ -440,6 +507,8 @@ Main () {
 		Root_Check
 		Log_And_Variables
 		KDE_Check
+		## If the user didnt enter an interface, scan for interfaces
+		## if he did, use that one
 		if [[ $Interface_ARG == 0 ]]; then
 			Filter_Active_Interfaces
 			Active_Interfaces_Menu "${#Filtered_Active_Interfaces[@]}" "${Filtered_Active_Interfaces[@]}"
@@ -455,6 +524,8 @@ Main () {
 		New_DNS1=$DNS1_ARG
 		New_DNS2=$DNS2_ARG
 		nmcli con show "$Profile_ARG"  &> $logpath
+		## If the profile name is in use, and the force flag is off, notify and exit
+		## if the flag is on, overwrite
 	  if [[ $? -eq 0 ]] && [[ $Force_ARG -eq 0 ]];then
 			echo "Profile name is already in use,"
 			echo "you can use -f to force overwrite"
