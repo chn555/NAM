@@ -16,7 +16,14 @@ This script requires nmcli
 
 ```
 git clone https://github.com/chn555/nama
-bash NAM.sh
+bash nama.sh
+```
+alternatively, you can install it as a native command by running : 
+
+```
+git clone https://github.com/chn555/nama
+cd nama
+sudo make install
 ```
 
 The script itself is interactive
