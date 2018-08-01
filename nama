@@ -10,9 +10,9 @@
 # Description :  NAM (Network Automated Manager).
 #				 This script will use nmcli to set up static ip efortlessly.
 #
-# Version :  2.0.2
+# Version :  2.0.3
 ################################################################################
-NAM_Version="2.0.2"
+NAM_Version="2.0.3"
 
 OPTS=$(getopt -o hfVi:p: --long ipv4:,gateway:,netmask:,dns1:,dns2:,runasroot,help,version -n 'parse-options' -- "$@")
 if [ $? != 0 ] ; then
