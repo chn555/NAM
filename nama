@@ -73,6 +73,13 @@ Root_Check () {
 	fi
 }
 
+Network_Manager_check () {
+	if ! command -v nmcli ; then
+		echo "Network Manager was not found, exiting."
+		exit 1
+	fi
+
+}
 ## Declare function’s variables, create and validate log files
 Log_And_Variables () {
 
@@ -107,6 +114,7 @@ KDE_Check () {
 		sleep 3s
   fi
 }
+
 
 ## Filter active network interfaces, ignoring any interfaces that are not
 ## ethernet or wireless
@@ -468,6 +476,7 @@ Main () {
      [[ $Force_ARG -eq 0 ]] && [[ $Help_ARG -eq 0 ]] ; then
 		echo $line
 		Root_Check
+		Network_Manager_check
 		Log_And_Variables
 		KDE_Check
 		Filter_Active_Interfaces
@@ -505,6 +514,7 @@ Main () {
 			exit
 		fi
 		Root_Check
+		Network_Manager_check
 		Log_And_Variables
 		KDE_Check
 		## If the user didnt enter an interface, scan for interfaces
