@@ -75,7 +75,10 @@ Root_Check () {
 
 Network_Manager_check () {
 	if ! command -v nmcli ; then
+		echo $line
 		echo "Network Manager was not found, exiting."
+		echo $line
+		echo ""
 		exit 1
 	fi
 
