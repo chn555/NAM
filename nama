@@ -78,7 +78,7 @@ Root_Check () {
 Network_Manager_check () {
 	## Define $line here to avoid calling Log_And_Variables
 	line=$(printf '%40s\n' | tr ' ' -)
-	if ! command -v nmcli ; then
+	if ! command -v nmcli &> /dev/null ; then
 		echo $line
 		echo "Network Manager was not found, exiting."
 		echo $line
