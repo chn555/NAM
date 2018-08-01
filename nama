@@ -14,7 +14,7 @@
 ################################################################################
 NAM_Version="2.0.2"
 
-OPTS=$(getopt -o hfVi:p: --long ipv4:,gateway:,netmask:,dns1:,dns2:,runasroot,help -n 'parse-options' -- "$@")
+OPTS=$(getopt -o hfVi:p: --long ipv4:,gateway:,netmask:,dns1:,dns2:,runasroot,help,version -n 'parse-options' -- "$@")
 if [ $? != 0 ] ; then
 	echo "Invalid arguments" >&2
 	echo "Use -h for help"
@@ -39,7 +39,7 @@ while true; do
 	case "$1" in
 		-h|--help) Help_ARG=1; shift ;;
 		-f )	Force_ARG=1; shift ;;
-		-V | --version) Version_ARG=1; shift ;;
+		-V |--version) Version_ARG=1; shift ;;
 		-i ) Interface_ARG=$2; shift 2;;
 		-p ) Profile_ARG=$2; shift 2 ;;
 		--ipv4 ) Ipv4_ARG=$2; shift 2 ;;
